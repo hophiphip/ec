@@ -45,7 +45,7 @@ static camera_config_t camera_config = {
 };
 
 
-esp_err_t camera_init()
+esp_err_t ec_camera_init()
 {
     esp_err_t err = esp_camera_init(&camera_config);
     if (err != ESP_OK) {
@@ -69,7 +69,7 @@ void process_image(
 
 
 // TODO: Pass a function pointer
-esp_err_t camera_capture()
+esp_err_t ec_camera_capture()
 {
     // Acquire a frame
     camera_fb_t *fb = esp_camera_fb_get();
@@ -92,8 +92,8 @@ void app_main()
 
 
     esp_err_t err = ESP_OK;
-    err = camera_init();
-    err = camera_capture();
+    err = ec_camera_init();
+    err = ec_camera_capture();
 
     /* Print chip information */
     esp_chip_info_t chip_info;

@@ -8,7 +8,7 @@
 ### Install PlatfromIO
 #### Installation process explained [here](https://docs.platformio.org/en/latest/core/installation.html).  
 
-#### Or do a quck install (Not recomended):
+#### Or do a quck install (Not recommended):
 ```bash
 pip install -U platformio
 ```

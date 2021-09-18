@@ -10,7 +10,7 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 
-static const char *TAG = "main";
+static const char *TAG = "ec:main";
 
 static camera_config_t camera_config = {
    .ledc_channel = LEDC_CHANNEL_0,
@@ -33,17 +33,32 @@ static camera_config_t camera_config = {
    .pin_sscb_scl = SIOC_GPIO_NUM,
    .pin_pwdn     = PWDN_GPIO_NUM,
    .pin_reset    = RESET_GPIO_NUM,
-  
+ 
+   // XCLK 20MHz or 10MHz
    .xclk_freq_hz = 20000000,
-  
+ 
+   // YUV422, GRAYSCALE, RGB565, JPEG
    .pixel_format = PIXFORMAT_JPEG,
   
-   // If PSRAM is present
-   .frame_size = FRAMESIZE_QVGA,
+   // QQVGA-UXGA Do not use sizes above QVGA when not JPEG
+   .frame_size   = FRAMESIZE_QVGA,
+
+   // 0-63 lower number means higher quality
    .jpeg_quality = 10,
-   .fb_count = 2
+   
+   // If more than one, i2s runs in continuous mode. Use only with JPEG
+   .fb_count = 1
 };
 
+esp_err_t ec_camera_init();
+esp_err_t ec_camera_capture();
+esp_err_t ec_process_image(
+    const size_t       width, 
+    const size_t      height, 
+    const pixformat_t format, 
+    const uint8_t*       buf, 
+    const size_t         len
+);
 
 esp_err_t ec_camera_init()
 {
@@ -57,14 +72,14 @@ esp_err_t ec_camera_init()
 }
 
 
-void process_image(
+void ec_process_image(
         const size_t width, 
         const size_t height, 
         const pixformat_t format, 
         const uint8_t* buf, 
         const size_t len) 
 {
-    // TODO: ...
+    return ESP_OK;
 }
 
 
@@ -78,7 +93,7 @@ esp_err_t ec_camera_capture()
         return ESP_FAIL;
     }
 
-    process_image(fb->width, fb->height, fb->format, fb->buf, fb->len);
+    ec_process_image(fb->width, fb->height, fb->format, fb->buf, fb->len);
   
     // Return the frame buffer back to the driver for reuse
     esp_camera_fb_return(fb);

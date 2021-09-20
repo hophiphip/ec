@@ -6,6 +6,8 @@
 
 #include <esp_http_server.h> // httpd_handle_t
 
+#include <esp_wifi.h> // tcpip_adapter_init
+
 static const char *TAG = "ec:main";
 
 static camera_config_t camera_config = {
@@ -60,12 +62,12 @@ esp_err_t jpg_http_handler(httpd_req_t *req)
     esp_err_t err = httpd_resp_set_type(req, "image/jpeg");
 
     if (err == ESP_OK)
-        err = httpd_resp_set_hdr(req, "Content-Disposition", "inline; filename=capture.jpg")
+        err = httpd_resp_set_hdr(req, "Content-Disposition", "inline; filename=capture.jpg");
 
     if (err == ESP_OK)
         err = httpd_resp_send(req, (const char *)fb->buf, fb->len);
         
-    time = (esp_timer_get_time() - time) / 1000 // μs to ms
+    time = (esp_timer_get_time() - time) / 1000; // μs to ms
 
     ESP_LOGI(TAG, "JPEG: %uKb %d%dms", 
             (err == ESP_OK) ? (uint32_t)(fb->len / 1024) : (uint32_t)0,
@@ -105,44 +107,44 @@ void webserver_stop(httpd_handle_t server)
     httpd_stop(server);
 }
 
-//esp_err_t event_handler(void *ctx, system_event_t *event)
-//{
-//    httpd_handle_t *server = (httpd_handle_t *)ctx;
-//  
-//    switch (event->event_id) {
-//        case SYSTEM_EVENT_STA_START: {
-//            ESP_LOGI(TAG, "SYSTEM_EVENT_STA_START");
-//            ESP_ERROR_CHECK(esp_wifi_connect()); 
-//        } break;
-//
-//        case SYSTEM_EVENT_STA_GOT_IP: {
-//            ESP_LOGI(TAG, "SYSTEM_EVENT_STA_GOT_IP");
-//            ESP_LOGI(TAG, "Got IP: '%s'",
-//               ip4addr_ntoa(&event->event_info.got_ip.ip_info.ip));
-//  
-//            // Start web server
-//            if (*server == NULL) {
-//                *server = webserver_start();
-//            }
-//        } break;
-//
-//        case SYSTEM_EVENT_STA_DISCONNECTED: {
-//            ESP_LOGI(TAG, "SYSTEM_EVENT_STA_DISCONNECTED");
-//            ESP_ERROR_CHECK(esp_wifi_connect());
-//  
-//            // Stop web server
-//            if (*server) {
-//                webserver_stop(*server);
-//                *server = NULL;
-//            }
-//        } break;
-//                                            
-//        default:
-//            break;
-//    }
-//
-//    return ESP_OK;
-//}
+esp_err_t event_handler(void *ctx, system_event_t *event)
+{
+    httpd_handle_t *server = (httpd_handle_t *)ctx;
+  
+    switch (event->event_id) {
+        case SYSTEM_EVENT_STA_START: {
+            ESP_LOGI(TAG, "SYSTEM_EVENT_STA_START");
+            ESP_ERROR_CHECK(esp_wifi_connect()); 
+        } break;
+
+        case SYSTEM_EVENT_STA_GOT_IP: {
+            ESP_LOGI(TAG, "SYSTEM_EVENT_STA_GOT_IP");
+            ESP_LOGI(TAG, "Got IP: '%s'",
+               ip4addr_ntoa(&event->event_info.got_ip.ip_info.ip));
+  
+            // Start web server
+            if (*server == NULL) {
+                *server = webserver_start();
+            }
+        } break;
+
+        case SYSTEM_EVENT_STA_DISCONNECTED: {
+            ESP_LOGI(TAG, "SYSTEM_EVENT_STA_DISCONNECTED");
+            ESP_ERROR_CHECK(esp_wifi_connect());
+  
+            // Stop web server
+            if (*server) {
+                webserver_stop(*server);
+                *server = NULL;
+            }
+        } break;
+                                            
+        default:
+            break;
+    }
+
+    return ESP_OK;
+}
 
 void wifi_init(void *arg)
 {

@@ -4,8 +4,13 @@
 #include "ec.h"
 #include "config.h"
 
-#include <esp_http_server.h> // httpd_handle_t
+#include "esp_http_server.h" // httpd_handle_t
 
+#include <esp_event_loop.h>
+#include <esp_log.h>
+#include <esp_system.h>
+#include <nvs_flash.h>
+#include <sys/param.h>
 #include <esp_wifi.h> // tcpip_adapter_init
 
 static const char *TAG = "ec:main";
@@ -48,9 +53,30 @@ static camera_config_t camera_config = {
    .fb_count = 1
 };
 
-esp_err_t jpg_http_handler(httpd_req_t *req)
+typedef struct {
+    httpd_req_t *req;
+    size_t       len;
+} jpg_chunking_t;
+
+static size_t jpg_encode_stream(void * arg, size_t index, const void* data, size_t len)
+{
+    jpg_chunking_t *j = (jpg_chunking_t *) arg;
+    if (!index) {
+        j->len = 0;
+    }
+
+    if (httpd_resp_send_chunk(j->req, (const char *)data, len) != ESP_OK) {
+        return 0;
+    }
+
+    j->len += len;
+    return len;
+}
+
+esp_err_t jpg_httpd_handler(httpd_req_t *req)
 {
     int64_t time = esp_timer_get_time();
+    size_t fb_len = 0;
 
     camera_fb_t *fb = esp_camera_fb_get();
     if (!fb) {
@@ -64,8 +90,19 @@ esp_err_t jpg_http_handler(httpd_req_t *req)
     if (err == ESP_OK)
         err = httpd_resp_set_hdr(req, "Content-Disposition", "inline; filename=capture.jpg");
 
-    if (err == ESP_OK)
-        err = httpd_resp_send(req, (const char *)fb->buf, fb->len);
+    if (err == ESP_OK) {
+        if (fb->format == PIXFORMAT_JPEG) {
+            fb_len = fb->len;
+            err = httpd_resp_send(req, (const char *)fb->buf, fb->len);
+        } else {
+            jpg_chunking_t jchunk = { req, 0 };
+            err = frame2jpg_cb(fb, 80, jpg_encode_stream, &jchunk) ? ESP_OK : ESP_FAIL;
+            httpd_resp_send_chunk(req, NULL, 0);
+            fb_len = jchunk.len;
+        }
+    }
+
+    esp_camera_fb_return(fb);
         
     time = (esp_timer_get_time() - time) / 1000; // μs to ms
 
@@ -74,8 +111,6 @@ esp_err_t jpg_http_handler(httpd_req_t *req)
             // Sort of a way to print int64_t:
             (int)(time >> 32), // [63..32] bits of int64_t
             (int)(time));      // [31.. 0] bits of int64_t
-    
-    esp_camera_fb_return(fb);
 
     return err;
 }
@@ -83,7 +118,7 @@ esp_err_t jpg_http_handler(httpd_req_t *req)
 httpd_uri_t uri_handler_jpg = {
     .uri = "/jpg",
     .method = HTTP_GET,
-    .handler = jpg_http_handler
+    .handler = jpg_httpd_handler
 };
 
 httpd_handle_t webserver_start(void) 
@@ -167,10 +202,8 @@ void wifi_init(void *arg)
 
 void app_main()
 {
-    printf("Hello world!\n");
-
     httpd_handle_t server = NULL;
-
+    ESP_ERROR_CHECK(nvs_flash_init());
     ec_camera_init(&camera_config);
     wifi_init(&server);
 }

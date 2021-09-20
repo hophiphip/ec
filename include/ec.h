@@ -2,7 +2,7 @@
 #define EC_H_
 
 #include "esp_camera.h"
-#include "esp_log.h"
+#include "esp_log.h"    // ESP_LOGE, ESP_LOGI
 
 // ------- Set camera model ---------------------------------------------------- //
 #ifndef EC_CAMERA_MODEL_
@@ -185,24 +185,30 @@
 // ----------------------------------------------------------------------------- //
 
 esp_err_t ec_camera_init(camera_config_t *config);
-esp_err_t ec_camera_capture();
-void ec_process_image(
-        const size_t width, 
-        const size_t height, 
-        const pixformat_t format, 
-        const uint8_t* buf, 
-        const size_t len
-); 
+
 #endif // EC_H_
 
 
+
+// ----------------------------------------------------------------------------- //
+/*                                Implementation                                 */
+// ----------------------------------------------------------------------------- //
+
+
+// ----------------------------------------------------------------------------- //
+/*                            Define implementation TAG                          */
+// ----------------------------------------------------------------------------- //
 // Both EC_CAMERA_IMPLEMENTATION and EC_NET_IMPLEMENTATION require TAG
 #if defined(EC_CAMERA_IMPLEMENTATION) || defined(EC_NET_IMPLEMENTATION)
     #define TAG "ec:ec"
 #endif // EC_CAMERA_IMPLEMENTATION || EC_NET_IMPLEMENTATION
 
 
-// Camera related functions implementation
+
+// ----------------------------------------------------------------------------- //
+/*                            Camera related functions                           */
+// ----------------------------------------------------------------------------- //
+// 
 #if defined(EC_CAMERA_IMPLEMENTATION)
 
 esp_err_t ec_camera_init(camera_config_t *config)
@@ -216,41 +222,22 @@ esp_err_t ec_camera_init(camera_config_t *config)
     return ESP_OK;
 }
 
-esp_err_t ec_camera_capture() 
-{
-    // Acquire a frame
-    camera_fb_t *fb = esp_camera_fb_get();
-    if (!fb) {
-        ESP_LOGE(TAG, "Camera capture failed");
-        return ESP_FAIL;
-    }
-
-    //ec_process_image(fb->width, fb->height, fb->format, fb->buf, fb->len);
-  
-    // Return the frame buffer back to the driver for reuse
-    esp_camera_fb_return(fb);
-
-    return ESP_OK;
-}
-
-void ec_process_image(
-        const size_t width, 
-        const size_t height, 
-        const pixformat_t format, 
-        const uint8_t* buf, 
-        const size_t len) 
-{
-    /* ... */
-}
-
 #endif // EC_CAMERA_IMPLEMENTATION
 
 
-// Network related functions implementation
+
+// ----------------------------------------------------------------------------- //
+/*                            Network relate functions                           */
+// ----------------------------------------------------------------------------- //
+// 
 #if defined(EC_NET_IMPLEMENTATION) && defined(EC_CAMERA_IMPLEMENTATION)
 #endif // EC_NET_IMPLEMENTATION && EC_CAMERA_IMPLEMENTATION
 
 
+
+// ----------------------------------------------------------------------------- //
+/*                          Undefine implementation TAG                          */
+// ----------------------------------------------------------------------------- //
 // Undefine TAG to prevent variable name collision
 #if defined(EC_CAMERA_IMPLEMENTATION) || defined(EC_NET_IMPLEMENTATION)
     #undef TAG

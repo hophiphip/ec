@@ -1,6 +1,7 @@
-#include "esp_camera.h"
-#include "camera_model.h"
-#include "camera_pins.h"
+#define CAMERA_MODEL_AI_THINKER
+#define EC_CAMERA_IMPLEMENTATION
+#define EC_NET_IMPLEMENTATION
+#include "ec.h"
 
 #include "esp_system.h"
 #include "esp_spi_flash.h"
@@ -50,65 +51,21 @@ static camera_config_t camera_config = {
    .fb_count = 1
 };
 
-esp_err_t ec_camera_init();
-esp_err_t ec_camera_capture();
-esp_err_t ec_process_image(
-    const size_t       width, 
-    const size_t      height, 
-    const pixformat_t format, 
-    const uint8_t*       buf, 
-    const size_t         len
-);
-
-esp_err_t ec_camera_init()
-{
-    esp_err_t err = esp_camera_init(&camera_config);
-    if (err != ESP_OK) {
-        ESP_LOGE(TAG, "Camera init failed, error: 0x%x", err);
-        return err;
-    }
-
-    return ESP_OK;
-}
-
-
-void ec_process_image(
-        const size_t width, 
-        const size_t height, 
-        const pixformat_t format, 
-        const uint8_t* buf, 
-        const size_t len) 
-{
-    return ESP_OK;
-}
-
-
-// TODO: Pass a function pointer
-esp_err_t ec_camera_capture()
-{
-    // Acquire a frame
-    camera_fb_t *fb = esp_camera_fb_get();
-    if (!fb) {
-        ESP_LOGE(TAG, "Camera capture failed");
-        return ESP_FAIL;
-    }
-
-    ec_process_image(fb->width, fb->height, fb->format, fb->buf, fb->len);
-  
-    // Return the frame buffer back to the driver for reuse
-    esp_camera_fb_return(fb);
-
-    return ESP_OK;
-}
-
 void app_main()
 {
     printf("Hello world!\n");
 
-
     esp_err_t err = ESP_OK;
-    err = ec_camera_init();
+
+    err = ec_camera_init(&camera_config);
+    if (err != ESP_OK) {
+        ESP_LOGE(TAG, "Init failed");
+    }
+
     err = ec_camera_capture();
+    if (err != ESP_OK) {
+        ESP_LOGE(TAG, "Capture failed");
+    }
 
     /* Print chip information */
     esp_chip_info_t chip_info;

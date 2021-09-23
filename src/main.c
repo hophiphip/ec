@@ -107,7 +107,7 @@ esp_err_t jpg_httpd_handler(httpd_req_t *req)
     time = (esp_timer_get_time() - time) / 1000; // μs to ms
 
     ESP_LOGI(TAG, "JPEG: %uKb %d%dms", 
-            (err == ESP_OK) ? (uint32_t)(fb->len / 1024) : (uint32_t)0,
+            (err == ESP_OK) ? (uint32_t)(fb_len / 1024) : (uint32_t)0,
             // Sort of a way to print int64_t:
             (int)(time >> 32), // [63..32] bits of int64_t
             (int)(time));      // [31.. 0] bits of int64_t
@@ -190,8 +190,8 @@ void wifi_init(void *arg)
     ESP_ERROR_CHECK(esp_wifi_set_storage(WIFI_STORAGE_RAM));
     wifi_config_t wifi_config = {
         .sta = {
-            .ssid = ssid,
-            .password = password,
+            .ssid = EC_CONFIG_SSID,
+            .password = EC_CONFIG_PASS,
         },
     };
     ESP_LOGI(TAG, "Setting WiFi configuration SSID %s...", wifi_config.sta.ssid);

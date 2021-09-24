@@ -231,6 +231,12 @@ esp_err_t ec_camera_init(camera_config_t *config)
 // ----------------------------------------------------------------------------- //
 // 
 #if defined(EC_NET_IMPLEMENTATION) && defined(EC_CAMERA_IMPLEMENTATION)
+
+esp_err_t ec_camera_process_image(httpd_req_t *req) 
+{
+    return ESP_OK;
+}
+
 #endif // EC_NET_IMPLEMENTATION && EC_CAMERA_IMPLEMENTATION
 
 

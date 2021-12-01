@@ -1,5 +1,4 @@
 .pio
-include/config.h
 include/.env.h
 src/sdkconfig
 src/sdkconfig.h

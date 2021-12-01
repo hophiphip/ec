@@ -1,8 +1,26 @@
 #define CAMERA_MODEL_AI_THINKER
 #define EC_CAMERA_IMPLEMENTATION
 #define EC_NET_IMPLEMENTATION
-#include "ec.h"
-#include "config.h"
+
+
+// Develpoment/default wifi config
+#define DEV_WIFI_SSID "wifi-ssid"
+#define DEV_WIFI_PASS "wifi-pass"
+
+// Import wifi config from environment file (if exists)
+#if defined __has_include
+#   if __has_include (".env.h")
+#       include ".env.h"
+#       define WIFI_SSID PROD_WIFI_SSID
+#       define WIFI_PASS PROD_WIFI_PASS
+#   else
+#       define WIFI_SSID DEV_WIFI_SSID
+#       define WIFI_PASS DEV_WIFI_PASS
+#   endif
+#else
+#   error "'__has_include' operator is not defined"
+#endif
+
 
 #include "esp_http_server.h" // httpd_handle_t
 
@@ -12,6 +30,9 @@
 #include <nvs_flash.h>
 #include <sys/param.h>
 #include <esp_wifi.h> // tcpip_adapter_init
+
+#include "ec.h"
+#include "config.h"
 
 static const char *TAG = "ec:main";
 
@@ -193,8 +214,8 @@ void wifi_init(void *arg)
     
     wifi_config_t wifi_config = {
         .sta = {
-            .ssid = EC_CONFIG_SSID,
-            .password = EC_CONFIG_PASS,
+            .ssid     = WIFI_SSID,
+            .password = WIFI_PASS,
         },
     };
     
